@@ -6,6 +6,7 @@ class PrefixSuffixDictGenerator:
 	prefixFile = "/home/stratdecider/ScrapperInput/TextAnalysis/prefix.csv"
 	suffixFile = "/home/stratdecider/ScrapperInput/TextAnalysis/suffix.csv"
 	keywordsToActual = "/home/stratdecider/ScrapperInput/TextAnalysis/Keywords.csv"
+	attributeMatching = "/home/stratdecider/ScrapperInput/TextAnalysis/AttributeMatching.csv"
 	def getPrefixDict(self):
 		allRows = self.getListFromCSV(self.prefixFile)
 		allKeywords = [row[0] for row in allRows]
@@ -87,6 +88,28 @@ class PrefixSuffixDictGenerator:
 				keyWordActualDict[row[0]] = row[1]
 		return keyWordActualDict
 
+	def getAttributeProsCons(self):
+		allRows = self.getListFromCSV(self.attributeMatching)
+		allKeywords = [row[0] for row in allRows]
+		allKeywords = list(set(allKeywords))
+		keyWordAttributeCommentDict = {}
+		keyWordAttributeCommentDict = {}
+		for row in allRows:
+			try:
+				attributeCommentDict = keyWordAttributeCommentDict[row[0]]
+				try:
+					commentListForAttribute = attributeCommentDict[row[1]]
+					# commentListForAttribute.append([row[3],row[4]])
+					# attributeCommentDict[row[1]] = commentListForAttribute
+				except:
+					commentListForAttribute = {}
+					attributeCommentDict[row[1]] = [row[3],row[4]]
+				
+			except:
+				attributeCommentDict = {}
+				attributeCommentDict[row[1]] = [row[3],row[4]]
+				keyWordAttributeCommentDict[row[0]] = attributeCommentDict
+		return keyWordAttributeCommentDict
 
 	def getListFromCSV(self, filename):
 		profileLinks = []

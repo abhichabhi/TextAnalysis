@@ -12,9 +12,11 @@ console.setLevel(logging.ERROR)
 logging.getLogger("").addHandler(console)
 def testPreficDictGenerator():
 	prefixSuffixDictGenerator = PrefixSuffixDictGenerator()
+	# pprint.pprint(prefixSuffixDictGenerator.getAttributeProsCons())
 	# keyWordAttributeCommentDict = prefixSuffixDictGenerator.getPrefixDict()
 	# print keyWordAttributeCommentDict
 	# allKeywords, keyWordAttributeDict = prefixSuffixDictGenerator.getAllKeywordsAndAttributes()
+	# print allKeywords
 	# keyWordActualDict = prefixSuffixDictGenerator.getkeywodToActual()
 	# print keyWordActualDict
 	# pprint.pprint(keyWordActualDict)

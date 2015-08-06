@@ -10,13 +10,14 @@ from operator import add
 class RougeNation:
 	LOG = "/home/stratdecider/ScrapperLogging/TextAnalysis.log"
 	logging.basicConfig(filename=LOG, filemode="w", level=logging.DEBUG)
-	AllReviewFolder = "/home/stratdecider/ScrapperInput/TextAnalysis/AllReview/" 
+	AllReviewFolder = "/home/stratdecider/ScrapperOutput/ReviewScrapper/NewPhoneReviews/" 
 	puntuationList = [".",";","!"]
 	prefixSuffixDictGenerator = PrefixSuffixDictGenerator()
 	keyWordList, keyWordAttributeDict = prefixSuffixDictGenerator.getAllKeywordsAndAttributes()
 	keyWordPrefixDict = prefixSuffixDictGenerator.getPrefixDict()
 	keyWordSuffixDict = prefixSuffixDictGenerator.getSuffixDict()
 	keyWordActualDict = prefixSuffixDictGenerator.getkeywodToActual()
+	attributeProsCons = prefixSuffixDictGenerator.getAttributeProsCons()
 	def getAllFilesFromFolder(self):
 			allCSVFiles = [ f for f in listdir(self.AllReviewFolder) if isfile(join(self.AllReviewFolder,f)) ]
 			return allCSVFiles
@@ -30,6 +31,7 @@ class RougeNation:
 			allKeyWordScore = self.primeReviewFileAnalyzer(file, allReviewsForFile)
 			# pprint.pprint(allKeyWordScore)
 			self.prepareSentimentFile(allKeyWordScore, file)
+			self.prepareProsAndConsFile(allKeyWordScore, file)
 
 	def primeReviewFileAnalyzer(self, file, allReviewsForFile):
 		reviewBlockPuntuated = self.getReviewBlockPuntuated(allReviewsForFile)
@@ -44,6 +46,7 @@ class RougeNation:
 				neu = 0
 				zer = 0
 				if keyword.lower() in reviewBlock.lower().split():
+
 					attributeScore = []
 					Prefix,Suffix = self.getPrefixSuffixFive(reviewBlock.lower().split(keyword.lower())[0], reviewBlock.lower().split(keyword.lower())[1])
 					SuffixTone, maxSuffixAttribute, sentimentIndexSuffix = self.getBestFitTone(keyword,Suffix,"Suffix")
@@ -135,8 +138,6 @@ class RougeNation:
 			actualKey = ""
 			try:
 				actualKey = self.keyWordActualDict[keywords]
-				
-
 			except:
 				pass
 			if actualKey:
@@ -164,7 +165,112 @@ class RougeNation:
 				self.writeToFile(csvRow,filePath)
 
 
-
+	def prepareProsAndConsFile(self, sentimetDict,file):
+		filePath = "/home/stratdecider/ScrapperOutput/TextAnalysis/ProsCons/ProsCons.csv"
+		file = file.replace(".csv","")
+		brand = file.split()[0]
+		keywordsProsConsDict = {}
+		prosDict = {}
+		consDict = {}
+		for keywords in sentimetDict:
+			prosDict = {}
+			consDict = {}
+			csvRow = []
+			totalPos = 0
+			totalNeg = 0
+			totalNeu = 0
+			attrDict = sentimetDict[keywords]
+			try:
+				actualKey = self.keyWordActualDict[keywords]
+			except:
+				actualKey = None
+			for attr in attrDict:
+				totalNeg = 0
+				totalPos = 0
+				csvRow = []
+				cons = ""
+				pros = ""
+				prosDict = {}
+				consDict = {}
+				consDictVal = 0
+				prosDictVal = 0
+				if attr != "":
+					values = attrDict[attr]
+					pos = values[0]
+					neg = values[1]
+					totalNeg = totalNeg + neg
+					totalNeu = 0
+					totalPos = totalPos + pos
+					if actualKey:
+						keywordsProsConsDictValue = {}
+						try:
+							keywordsProsConsDictValue = keywordsProsConsDict[actualKey]
+							prosDict = keywordsProsConsDictValue["pros"]
+							consDict = keywordsProsConsDictValue["cons"]
+							try:
+								prosDictVal = prosDict[self.attributeProsCons[keywords][attr][0]]
+								prosDictVal = prosDictVal + totalPos
+								prosDict[self.attributeProsCons[keywords][attr][0]] = prosDictVal
+							except:
+								prosDictVal = totalPos
+								if prosDictVal > 0:
+									prosDict[self.attributeProsCons[keywords][attr][0]] = prosDictVal
+							try:
+								consDictVal = consDict[self.attributeProsCons[keywords][attr][1]]
+								consDictVal = consDictVal + totalNeg
+								consDict[self.attributeProsCons[keywords][attr][1]] = consDictVal
+							except:
+								consDictVal = totalNeg
+								if consDictVal > 0:
+									consDict[self.attributeProsCons[keywords][attr][1]] = consDictVal
+						except:
+							prosDictVal = totalPos
+							try:
+								if prosDictVal> 0 :
+									prosDict[self.attributeProsCons[keywords][attr][0]] = prosDictVal
+									keywordsProsConsDictValue["pros"] = prosDict
+							except:
+								pass
+							consDictVal = totalNeg
+							try:
+								if consDictVal > 0: 
+									consDict[self.attributeProsCons[keywords][attr][1]] = consDictVal
+									keywordsProsConsDictValue["cons"] = consDict
+							except:
+								pass
+							keywordsProsConsDict[actualKey]  = keywordsProsConsDictValue
+		for keywords in keywordsProsConsDict:
+			try:
+				prosDict = keywordsProsConsDict[keywords]["pros"]
+				
+				for pros in prosDict:
+					csvRow = []
+					if prosDict[pros] != 0 and pros.strip() != "":
+						proStatement = pros + " (" + str(prosDict[pros]) + ")"
+						csvRow.append(brand)
+						csvRow.append(file)
+						csvRow.append(keywords)
+						csvRow.append(proStatement)
+						csvRow.append("")
+						self.writeToFile(csvRow,filePath)
+			except:
+				pass
+			try:
+				consDict = keywordsProsConsDict[keywords]["cons"]
+				for cons in consDict:
+					csvRow = []
+					if consDict[cons] != 0 and cons.strip() != "":
+						consStatement = cons + " (" + str(consDict[cons]) + ")"
+						csvRow.append(brand)
+						csvRow.append(file)
+						csvRow.append(keywords)
+						csvRow.append("")
+						csvRow.append(consStatement)
+						self.writeToFile(csvRow,filePath)
+			except:
+				pass
+		# pprint.pprint(keywordsProsConsDict)
+						
 	def getBestFitTone(self,keyword,subtring,part):
 		keywordPartDict = {}
 		attributeCommentDict = {}
@@ -235,11 +341,7 @@ class RougeNation:
 		with open(filename, 'a') as outcsv:
 			writer = csv.writer(outcsv, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
 			writer.writerow(row)
-		
-    
-		
 	def getListFromCSV(self, filename):
-		print filename
 		profileLinks = []
 		with open(filename, 'r') as f:
 			readColumns = (csv.reader(f, delimiter=','))
