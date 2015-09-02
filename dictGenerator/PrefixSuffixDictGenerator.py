@@ -1,12 +1,15 @@
-import itertools
+import itertools, getpass
 import csv
 import logging
 import datetime
-class PrefixSuffixDictGenerator:
-	prefixFile = "/home/stratdecider/ScrapperInput/TextAnalysis/prefix.csv"
-	suffixFile = "/home/stratdecider/ScrapperInput/TextAnalysis/suffix.csv"
-	keywordsToActual = "/home/stratdecider/ScrapperInput/TextAnalysis/Keywords.csv"
-	attributeMatching = "/home/stratdecider/ScrapperInput/TextAnalysis/AttributeMatching.csv"
+
+class PrefixSuffixDictGenerator():
+	def __init__(self,category):
+		self.prefixFile = "/home/" + getpass.getuser() + "/ScrapperInput/TextAnalysis/" + category + "/prefix.csv"
+		self.suffixFile = "/home/" + getpass.getuser() + "/ScrapperInput/TextAnalysis/" + category + "/suffix.csv"
+		self.keywordsToActual = "/home/" + getpass.getuser() + "/ScrapperInput/TextAnalysis/" + category + "/Keywords.csv"
+		self.attributeMatching = "/home/" + getpass.getuser() + "/ScrapperInput/TextAnalysis/" + category + "/AttributeMatching.csv"
+	
 	def getPrefixDict(self):
 		allRows = self.getListFromCSV(self.prefixFile)
 		allKeywords = [row[0] for row in allRows]

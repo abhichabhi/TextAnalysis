@@ -1,5 +1,6 @@
-import pprint
-import logging
+'''
+'''
+import pprint, getpass
 from decimal import *
 import json, csv, os
 from os import listdir
@@ -7,25 +8,29 @@ from os.path import isfile, join
 from dictGenerator.PrefixSuffixDictGenerator import PrefixSuffixDictGenerator
 from difflib import SequenceMatcher
 from operator import add
+
 class RougeNation:
-	LOG = "/home/stratdecider/ScrapperLogging/TextAnalysis.log"
-	logging.basicConfig(filename=LOG, filemode="w", level=logging.DEBUG)
-	AllReviewFolder = "/home/stratdecider/ScrapperOutput/ReviewScrapper/NewPhoneReviews/" 
-	puntuationList = [".",";","!"]
-	prefixSuffixDictGenerator = PrefixSuffixDictGenerator()
-	keyWordList, keyWordAttributeDict = prefixSuffixDictGenerator.getAllKeywordsAndAttributes()
-	keyWordPrefixDict = prefixSuffixDictGenerator.getPrefixDict()
-	keyWordSuffixDict = prefixSuffixDictGenerator.getSuffixDict()
-	keyWordActualDict = prefixSuffixDictGenerator.getkeywodToActual()
-	attributeProsCons = prefixSuffixDictGenerator.getAttributeProsCons()
+	def __init__(self, category):
+		self.category = category
+		self.AllReviewFolder = "/home/" + getpass.getuser() + "/ScrapperOutput/ReviewScrapper/" + category + "/FinalReviews/"
+		self.puntuationList = [".",";","!"]
+		self.prefixSuffixDictGenerator = PrefixSuffixDictGenerator(self.category)
+		self.keyWordList, self.keyWordAttributeDict = self.prefixSuffixDictGenerator.getAllKeywordsAndAttributes()
+		self.keyWordPrefixDict = self.prefixSuffixDictGenerator.getPrefixDict()
+		self.keyWordSuffixDict = self.prefixSuffixDictGenerator.getSuffixDict()
+		self.keyWordActualDict = self.prefixSuffixDictGenerator.getkeywodToActual()
+		self.attributeProsCons = self.prefixSuffixDictGenerator.getAttributeProsCons()
+
 	def getAllFilesFromFolder(self):
 			allCSVFiles = [ f for f in listdir(self.AllReviewFolder) if isfile(join(self.AllReviewFolder,f)) ]
 			return allCSVFiles
+
 	def primeAllFileTextAnalyzer(self):
 		allCSVFiles  = self.getAllFilesFromFolder()
 
 		for file in allCSVFiles:
 			filename = self.AllReviewFolder + file
+			
 			allReviewsForFile = self.getListFromCSV(filename)
 			
 			allKeyWordScore = self.primeReviewFileAnalyzer(file, allReviewsForFile)
@@ -37,6 +42,7 @@ class RougeNation:
 		reviewBlockPuntuated = self.getReviewBlockPuntuated(allReviewsForFile)
 		allKeyWordScore = {}
 		for reviewBlock in reviewBlockPuntuated:
+			
 			for keyword in  self.keyWordList:
 				allKeyWordAttributeScore = {}
 				finalAttr = ''
@@ -111,8 +117,9 @@ class RougeNation:
 		return  allKeyWordScore
 
 	def prepareSentimentFile(self, sentimetDict,file):
-		filePath = "/home/stratdecider/ScrapperOutput/TextAnalysis/Sentiment/Sentiment.csv"
+		filePath = "/home/" + getpass.getuser() + "/ScrapperOutput/TextAnalysis/Sentiment/" + self.category + "/Sentiment.csv"
 		file = file.replace(".csv","")
+		
 		brand = file.split()[0]
 		actualKeyWordSentimentDict = {}
 		for actualKeywords in self.keyWordActualDict:
@@ -162,11 +169,12 @@ class RougeNation:
 				rating = totalPos*5/float(totalAttendence)
 				rating = "{:.2f}".format(rating)
 				csvRow.append(rating)
+				if 'Apple' in file:
+					print "in prepareSentiment", file
 				self.writeToFile(csvRow,filePath)
 
-
 	def prepareProsAndConsFile(self, sentimetDict,file):
-		filePath = "/home/stratdecider/ScrapperOutput/TextAnalysis/ProsCons/ProsCons.csv"
+		filePath = "/home/" + getpass.getuser() + "/ScrapperOutput/TextAnalysis/ProsCons/" + self.category + "/ProsCons.csv"
 		file = file.replace(".csv","")
 		brand = file.split()[0]
 		keywordsProsConsDict = {}
@@ -319,7 +327,8 @@ class RougeNation:
 		for allReview in allReviewsForFile:
 
 			try:
-				reviewSring =  allReview[4]
+				reviewSring =  allReview[1:]
+				reviewSring = ''.join(reviewSring)
 			except:
 				pass
 			for puntuation in self.puntuationList:
@@ -341,6 +350,7 @@ class RougeNation:
 		with open(filename, 'a') as outcsv:
 			writer = csv.writer(outcsv, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
 			writer.writerow(row)
+
 	def getListFromCSV(self, filename):
 		profileLinks = []
 		with open(filename, 'r') as f:
@@ -351,8 +361,3 @@ class RougeNation:
 				except:
 					pass
 			return profileLinks
-
-
-
-
-

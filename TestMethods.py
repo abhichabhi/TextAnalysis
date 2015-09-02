@@ -21,6 +21,6 @@ def testPreficDictGenerator():
 	# print keyWordActualDict
 	# pprint.pprint(keyWordActualDict)
 	rougeNation = RougeNation()
-	rougeNation.primeAllFileTextAnalyzer() 
-
+	rougeNation.primeAllFileTextAnalyzer()
+	
 testPreficDictGenerator()
